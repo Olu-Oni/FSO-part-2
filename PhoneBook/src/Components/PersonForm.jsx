@@ -3,7 +3,12 @@ const PersonForm = ({ onSubmit, formValues }) => (
     {formValues.map((arr) => (
       <div key={arr.id}>
         {arr.name}{" "}
-        <input id={arr.id} value={arr.value} onChange={arr.onchange} />
+        <input
+          type={arr.type}
+          id={arr.id}
+          value={arr.value}
+          onChange={arr.onchange}
+        />
       </div>
     ))}
 

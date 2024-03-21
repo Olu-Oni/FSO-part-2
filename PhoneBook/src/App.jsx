@@ -7,16 +7,14 @@ import personService from "./services/persons.js";
 
 const App = () => {
   const [persons, setPersons] = useState([]);
-
   const [searchedPersons, setSearchedPersons] = useState("");
   const [newPerson, setNewPerson] = useState({ name: "", num: "" });
 
-  const baseUrl = 'http://localhost:3002/persons'
-  useEffect(() =>{
-    personService
-    .getPersons(baseUrl)
-    .then( result => setPersons(result))
-    },[])
+  const baseUrl = "http://localhost:3002/persons";
+
+  useEffect(() => {
+    personService.getPersons(baseUrl).then((result) => setPersons(result));
+  }, []);
 
   const formValues = [
     {
@@ -29,6 +27,7 @@ const App = () => {
     {
       id: 2,
       name: "number: ",
+      type: "number",
       value: newPerson.num,
       onchange: (event) =>
         setNewPerson({ ...newPerson, num: event.target.value }),
@@ -37,41 +36,61 @@ const App = () => {
 
   const addPersons = (event) => {
     event.preventDefault();
-    
-    if (persons.every((arr) => arr.name != newPerson.name)) {
-      //if all are not equal
+    if (newPerson.name.split(" ").join("") === "" || newPerson.num === "") {
+      window.alert(`please fill completely before submitting`);
+    } else if (persons.every((arr) => arr.name != newPerson.name)) {
+      //if none are equal
+
       const addedPerson = {
         name: newPerson.name,
         num: newPerson.num,
-        id: persons.length + 1,
-      }
+      };
       personService
-      .addPersons(baseUrl, addedPerson)
-      .then(result => setPersons(persons.concat(result)));
+        .addPersons(baseUrl, addedPerson)
+        .then((result) => setPersons(persons.concat(result)));
     } else {
       //if at least one is equal
-      window.alert(`${newPerson.name} <-- is already added to phonebook`);
+      const newObject = persons.find((n) => n.name === newPerson.name);
+      if (newObject.num === newPerson.num) {
+        window.alert(`${newPerson.name} <-- is already added to phonebook`);
+      } else {
+        if (
+          window.confirm(
+            ` ${newPerson.name} is already in phonebook, replace the old number with a new one? `
+          )
+        ) {
+          newObject.num = newPerson.num;
+          personService
+            .updatePersons(baseUrl, newObject, persons)
+            .then((result) => setPersons(result));
+        }
+      }
     }
   };
 
   const search = (event) => {
     setSearchedPersons(event.target.value);
-    
   };
 
-  const removePersons =(arr) =>{
-    const index = persons.indexOf(arr)
-    if(window.confirm(`Delete ${arr.name}?`))
-    {
-    personService
-    .deletePersons(`${baseUrl}/${arr.id}`, persons, index)
-    .then((result) => {setPersons(result)})
-    }
-  } 
+  const searchArr = (objArray, searchVal) => {
+    return objArray.filter((arr) =>
+      (arr.name + arr.num).toLowerCase().includes(searchVal.toLowerCase())
+    );
+  };
 
-  const filteredPersons = (searchedPersons === "")? persons: persons.filter((arr) =>
-          (arr.name + arr.num).includes(searchedPersons)
-        )
+  const removePersons = (arr) => {
+    const index = persons.indexOf(arr);
+    if (window.confirm(`Delete ${arr.name}?`)) {
+      personService
+        .deletePersons(`${baseUrl}/${arr.id}`, persons, index)
+        .then((result) => {
+          setPersons(result);
+        });
+    }
+  };
+
+  const filteredPersons =
+    searchedPersons === "" ? persons : searchArr(persons, searchedPersons);
 
   return (
     <div>
@@ -83,15 +102,16 @@ const App = () => {
       <PersonForm onSubmit={addPersons} formValues={formValues} />
 
       <h2>Numbers</h2>
-      {filteredPersons.map(arr =>
-        <Persons
-        key = {arr.id}
-        name={arr.name}
-        num = {arr.num}
-        onClick={() => removePersons(arr)}
-      />
-        )}
-      
+      {filteredPersons.length !== 0
+        ? filteredPersons.map((arr) => (
+            <Persons
+              key={arr.id}
+              name={arr.name}
+              num={arr.num}
+              onClick={() => removePersons(arr)}
+            />
+          ))
+        : `Nothing to see here...`}
     </div>
   );
 };
