@@ -1,16 +1,18 @@
 import axios from "axios";
 
-const getPersons = (URL) => {
+const URL = "/api/persons";
+
+const getPersons = () => {
   const result = axios.get(URL).then((response) => response.data);
   return result;
 };
 
-const addPersons = (URL, newObject) => {
+const addPersons = ( newObject) => {
   const result = axios.post(URL, newObject).then((response) => response.data);
   return result;
 };
-const deletePersons = (objURL, arr, index) => {
-  const result = axios.delete(objURL).then(() => {
+const deletePersons = (id, arr, index) => {
+  const result = axios.delete(`${URL}/${id}`).then(() => {
     let tempArr = [...arr];
     tempArr.splice(index, 1);
     //using splice...
@@ -23,7 +25,7 @@ const deletePersons = (objURL, arr, index) => {
   return result;
 };
 
-const updatePersons = (URL, newObject, arrobject) => {
+const updatePersons = ( newObject, arrobject) => {
   return axios
     .put(`${URL}/${newObject.id}`, newObject)
     .then((response) =>

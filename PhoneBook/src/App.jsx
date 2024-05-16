@@ -2,18 +2,18 @@ import { useState, useEffect } from "react";
 import Filter from "./Components/Filter.jsx";
 import PersonForm from "./Components/PersonForm.jsx";
 import Persons from "./Components/Persons.jsx";
-import axios from "axios";
+import Notification from "./Components/Notification.jsx";
 import personService from "./services/persons.js";
 
 const App = () => {
   const [persons, setPersons] = useState([]);
   const [searchedPersons, setSearchedPersons] = useState("");
   const [newPerson, setNewPerson] = useState({ name: "", num: "" });
-
-  const baseUrl = "http://localhost:3002/persons";
+  const [messageBox, setMessageBox] = useState(null)
+  const baseUrl = "http://localhost:3003/persons";
 
   useEffect(() => {
-    personService.getPersons(baseUrl).then((result) => setPersons(result));
+    personService.getPersons().then((result) => setPersons(result));
   }, []);
 
   const formValues = [
@@ -46,8 +46,13 @@ const App = () => {
         num: newPerson.num,
       };
       personService
-        .addPersons(baseUrl, addedPerson)
-        .then((result) => setPersons(persons.concat(result)));
+        .addPersons( addedPerson)
+        .then((result) => {
+          setPersons(persons.concat(result))
+          setMessageBox(`Added ${result.name}`)
+          setTimeout(() => setMessageBox(null),3000)
+          }
+        );
     } else {
       //if at least one is equal
       const newObject = persons.find((n) => n.name === newPerson.name);
@@ -61,8 +66,18 @@ const App = () => {
         ) {
           newObject.num = newPerson.num;
           personService
-            .updatePersons(baseUrl, newObject, persons)
-            .then((result) => setPersons(result));
+            .updatePersons( newObject, persons)
+            .then((result) => {
+              setPersons(result)
+              setMessageBox(`Changed ${newObject.name}'s number to ${newObject.num}`)
+              setTimeout(() => setMessageBox(null),3000)  
+              })
+            .catch(error =>{
+              setMessageBox(`Information of ${newObject.name} has already been removed from server`)
+              setTimeout(() => setMessageBox(null),3000)
+              }
+            )
+            
         }
       }
     }
@@ -82,7 +97,7 @@ const App = () => {
     const index = persons.indexOf(arr);
     if (window.confirm(`Delete ${arr.name}?`)) {
       personService
-        .deletePersons(`${baseUrl}/${arr.id}`, persons, index)
+        .deletePersons(arr.id, persons, index)
         .then((result) => {
           setPersons(result);
         });
@@ -94,8 +109,11 @@ const App = () => {
 
   return (
     <div>
-      <h2>Phonebook</h2>
-
+      <h1>Phonebook</h1>
+      <Notification 
+      name = {newPerson.name} 
+      message = {messageBox}/>
+      
       <Filter text="filter shown with: " onChange={search} />
 
       <h2>add a new</h2>
